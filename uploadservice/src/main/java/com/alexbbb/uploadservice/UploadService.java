@@ -1,15 +1,12 @@
 package com.alexbbb.uploadservice;
 
-import android.app.Application;
 import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Intent;
 import android.graphics.Color;
-import android.os.Build;
 import android.os.PowerManager;
-import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Builder;
 import android.media.RingtoneManager;
 import java.net.MalformedURLException;
@@ -108,8 +105,10 @@ public class UploadService extends IntentService {
         super.onCreate();
 
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        notification = new NotificationCompat.Builder(this);
+        //notification = new NotificationCompat.Builder(this);
+        notification = new Builder(this, DOWNLOAD_CHANNEL_ID);
         PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+        assert pm != null;
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
 
         this.createChannelUploadService();
@@ -216,17 +215,13 @@ public class UploadService extends IntentService {
     }
 
     private void createChannelUploadService(){
-        NotificationChannel androidChannel = null;
+        NotificationChannel androidChannel;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             androidChannel = new NotificationChannel(DOWNLOAD_CHANNEL_ID,
                     DOWNLOAD_CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
-            // Sets whether notifications posted to this channel should display notification lights
             androidChannel.enableLights(true);
-            // Sets whether notification posted to this channel should vibrate.
             androidChannel.enableVibration(false);
-            // Sets the notification light color for notifications posted to this channel
             androidChannel.setLightColor(Color.MAGENTA);
-            // Sets whether notifications posted to this channel appear on the lockscreen or not
             androidChannel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
 
             notificationManager.createNotificationChannel(androidChannel);
@@ -234,52 +229,25 @@ public class UploadService extends IntentService {
 
     }
 
-    //Create a simple notification builder configured with the selected channel and details
-    private Builder getSimpleNotificationBuilder(){
-        return new Builder(getApplicationContext(), DOWNLOAD_CHANNEL_ID)
-                .setSmallIcon(notificationConfig.getIconResourceID())
-                .setContentTitle(notificationConfig.getTitle())
-                .setContentText(notificationConfig.getMessage())
-                .setPriority(PRIORITY_DEFAULT)
-                .setAutoCancel(true);
-    }
-
-    private Builder getSimpleNotificationBuilder(int uploadedBytes, int totalBytes, boolean going){
-        return new Builder(getApplicationContext(), DOWNLOAD_CHANNEL_ID)
-                .setSmallIcon(notificationConfig.getIconResourceID())
+    private void setSimpleNotificationBuilder(int totalBytes, int uploadedBytes, boolean indeterminate, boolean going){
+        notification.setSmallIcon(notificationConfig.getIconResourceID())
+                .setContentIntent(notificationConfig.getPendingIntent(this))
                 .setContentTitle(notificationConfig.getTitle())
                 .setContentText(notificationConfig.getMessage())
                 .setPriority(PRIORITY_DEFAULT)
                 .setAutoCancel(true)
-                .setProgress(totalBytes, uploadedBytes, false)
+                .setProgress(totalBytes, uploadedBytes, indeterminate)
                 .setOngoing(going);
     }
 
     private void createNotification() {
-        /*notification.setContentTitle(notificationConfig.getTitle())
-                    .setContentText(notificationConfig.getMessage())
-                    .setContentIntent(notificationConfig.getPendingIntent(this))
-                    .setSmallIcon(notificationConfig.getIconResourceID())
-                    .setProgress(100, 0, true).setOngoing(true);
-
-
-        startForeground(UPLOAD_NOTIFICATION_ID, notification.build());*/
-
-        startForeground(UPLOAD_NOTIFICATION_ID,
-                getSimpleNotificationBuilder().build());
+        this.setSimpleNotificationBuilder(100, 0, true, true);
+        startForeground(UPLOAD_NOTIFICATION_ID, this.notification.build());
     }
 
     private void updateNotificationProgress(int uploadedBytes, int totalBytes) {
-        /*notification.setContentTitle(notificationConfig.getTitle())
-                    .setContentText(notificationConfig.getMessage())
-                    .setContentIntent(notificationConfig.getPendingIntent(this))
-                    .setSmallIcon(notificationConfig.getIconResourceID())
-                    .setProgress(totalBytes, uploadedBytes, false)
-                    .setOngoing(true);
-
-        startForeground(UPLOAD_NOTIFICATION_ID, notification.build());*/
-        startForeground(UPLOAD_NOTIFICATION_ID,
-                getSimpleNotificationBuilder(uploadedBytes, totalBytes, true).build());
+        this.setSimpleNotificationBuilder(totalBytes, uploadedBytes, false, true);
+        startForeground(UPLOAD_NOTIFICATION_ID, this.notification.build());
 
     }
 
@@ -287,17 +255,9 @@ public class UploadService extends IntentService {
         stopForeground(notificationConfig.isAutoClearOnSuccess());
 
         if (!notificationConfig.isAutoClearOnSuccess()) {
-            /*notification.setContentTitle(notificationConfig.getTitle())
-                        .setContentText(notificationConfig.getCompleted())
-                        .setContentIntent(notificationConfig.getPendingIntent(this))
-                        .setSmallIcon(notificationConfig.getIconResourceID())
-                        .setProgress(0, 0, false)
-                        .setOngoing(false);
-            setRingtone();
-            notificationManager.notify(UPLOAD_NOTIFICATION_ID_DONE, notification.build());*/
-
-            notificationManager.notify(UPLOAD_NOTIFICATION_ID_DONE,
-                    this.getSimpleNotificationBuilder(0,0,false).build());
+            this.setSimpleNotificationBuilder(0,0,false, false);
+            this.setRingtone();
+            this.notificationManager.notify(UPLOAD_NOTIFICATION_ID_DONE, notification.build());
         }
     }
 
@@ -312,16 +272,8 @@ public class UploadService extends IntentService {
 
     private void updateNotificationError() {
         stopForeground(false);
-
-        /*notification.setContentTitle(notificationConfig.getTitle())
-                    .setContentText(notificationConfig.getError())
-                    .setContentIntent(notificationConfig.getPendingIntent(this))
-                    .setSmallIcon(notificationConfig.getIconResourceID())
-                    .setProgress(0, 0, false).setOngoing(false);
-        setRingtone();
-        notificationManager.notify(UPLOAD_NOTIFICATION_ID_DONE, notification.build());*/
-
-        notificationManager.notify(UPLOAD_NOTIFICATION_ID_DONE,
-                getSimpleNotificationBuilder(0,0,false).build());
+        this.setSimpleNotificationBuilder(0,0,false, false);
+        this.setRingtone();
+        notificationManager.notify(UPLOAD_NOTIFICATION_ID_DONE, notification.build());
     }
 }
