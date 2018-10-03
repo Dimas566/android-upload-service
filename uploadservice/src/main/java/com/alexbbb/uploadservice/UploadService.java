@@ -6,6 +6,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat.Builder;
 import android.media.RingtoneManager;
@@ -68,8 +69,8 @@ public class UploadService extends IntentService {
     public static final String SERVER_RESPONSE_CODE = "serverResponseCode";
     public static final String SERVER_RESPONSE_MESSAGE = "serverResponseMessage";
 
-    public static final String DOWNLOAD_CHANNEL_ID = "com.alexbbb.uploadservice.UPLOAD";
-    public static final String DOWNLOAD_CHANNEL_NAME = "UPLOAD SERVICE CHANNEL";
+    public static final String UPLOAD_CHANNEL_ID = "com.alexbbb.uploadservice.UPLOAD";
+    public static final String UPLOAD_CHANNEL_NAME = "UPLOAD SERVICE CHANNEL";
 
     private NotificationManager notificationManager;
     private Builder notification;
@@ -106,12 +107,12 @@ public class UploadService extends IntentService {
 
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         //notification = new NotificationCompat.Builder(this);
-        notification = new Builder(this, DOWNLOAD_CHANNEL_ID);
+        notification = new Builder(this, UPLOAD_CHANNEL_ID);
         PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
         assert pm != null;
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
 
-        this.createChannelUploadService();
+        this.createNotificationChannelUploadService();
     }
 
     @Override
@@ -214,11 +215,12 @@ public class UploadService extends IntentService {
         wakeLock.release();
     }
 
-    private void createChannelUploadService(){
-        NotificationChannel androidChannel;
+    private void createNotificationChannelUploadService(){
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            androidChannel = new NotificationChannel(DOWNLOAD_CHANNEL_ID,
-                    DOWNLOAD_CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationChannel androidChannel = new NotificationChannel(
+                    UPLOAD_CHANNEL_ID,
+                    UPLOAD_CHANNEL_NAME,
+                    NotificationManager.IMPORTANCE_LOW);
             androidChannel.enableLights(true);
             androidChannel.enableVibration(false);
             androidChannel.setLightColor(Color.MAGENTA);
@@ -231,6 +233,8 @@ public class UploadService extends IntentService {
 
     private void setSimpleNotificationBuilder(int totalBytes, int uploadedBytes, boolean indeterminate, boolean going){
         notification.setSmallIcon(notificationConfig.getIconResourceID())
+                .setChannelId(UPLOAD_CHANNEL_ID)
+                .setWhen(System.currentTimeMillis())
                 .setContentIntent(notificationConfig.getPendingIntent(this))
                 .setContentTitle(notificationConfig.getTitle())
                 .setContentText(notificationConfig.getMessage())
@@ -257,23 +261,23 @@ public class UploadService extends IntentService {
         if (!notificationConfig.isAutoClearOnSuccess()) {
             this.setSimpleNotificationBuilder(0,0,false, false);
             this.setRingtone();
-            this.notificationManager.notify(UPLOAD_NOTIFICATION_ID_DONE, notification.build());
+            this.notificationManager.notify(UPLOAD_NOTIFICATION_ID_DONE+1, notification.build());
         }
-    }
-
-    private void setRingtone() {
-
-        if(notificationConfig.isRingTone()) {
-            notification.setSound(RingtoneManager.getActualDefaultRingtoneUri(this, RingtoneManager.TYPE_NOTIFICATION));
-            notification.setOnlyAlertOnce(false);
-        }
-
     }
 
     private void updateNotificationError() {
         stopForeground(false);
         this.setSimpleNotificationBuilder(0,0,false, false);
         this.setRingtone();
-        notificationManager.notify(UPLOAD_NOTIFICATION_ID_DONE, notification.build());
+        notificationManager.notify(UPLOAD_NOTIFICATION_ID_DONE+1, notification.build());
+    }
+
+    private void setRingtone() {
+
+        if(notificationConfig.isRingTone() && Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            notification.setSound(RingtoneManager.getActualDefaultRingtoneUri(this, RingtoneManager.TYPE_NOTIFICATION));
+            notification.setOnlyAlertOnce(true);
+        }
+
     }
 }
