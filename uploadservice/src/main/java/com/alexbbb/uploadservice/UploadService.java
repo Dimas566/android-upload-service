@@ -107,7 +107,6 @@ public class UploadService extends IntentService {
 
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         //notification = new NotificationCompat.Builder(this);
-        notification = new Builder(this, UPLOAD_CHANNEL_ID);
         PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
         assert pm != null;
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
@@ -225,14 +224,17 @@ public class UploadService extends IntentService {
             androidChannel.enableVibration(false);
             androidChannel.setLightColor(Color.MAGENTA);
             androidChannel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+            androidChannel.setSound(null, null);
 
             notificationManager.createNotificationChannel(androidChannel);
         }
 
     }
 
-    private void setSimpleNotificationBuilder(int totalBytes, int uploadedBytes, boolean indeterminate, boolean going){
-        notification.setSmallIcon(notificationConfig.getIconResourceID())
+    private void setSimpleNotificationBuilder(){
+        this.createNotificationChannelUploadService();
+        this.notification = new Builder(this, UPLOAD_CHANNEL_ID)
+                .setSmallIcon(notificationConfig.getIconResourceID())
                 .setChannelId(UPLOAD_CHANNEL_ID)
                 .setWhen(System.currentTimeMillis())
                 .setContentIntent(notificationConfig.getPendingIntent(this))
@@ -240,17 +242,17 @@ public class UploadService extends IntentService {
                 .setContentText(notificationConfig.getMessage())
                 .setPriority(PRIORITY_DEFAULT)
                 .setAutoCancel(true)
-                .setProgress(totalBytes, uploadedBytes, indeterminate)
-                .setOngoing(going);
+                .setDefaults(0)
+                .setOngoing(true);
     }
 
     private void createNotification() {
-        this.setSimpleNotificationBuilder(100, 0, true, true);
+        this.setSimpleNotificationBuilder();
         startForeground(UPLOAD_NOTIFICATION_ID, this.notification.build());
     }
 
     private void updateNotificationProgress(int uploadedBytes, int totalBytes) {
-        this.setSimpleNotificationBuilder(totalBytes, uploadedBytes, false, true);
+        this.notification.setProgress(totalBytes, uploadedBytes, false);
         startForeground(UPLOAD_NOTIFICATION_ID, this.notification.build());
 
     }
@@ -259,17 +261,19 @@ public class UploadService extends IntentService {
         stopForeground(notificationConfig.isAutoClearOnSuccess());
 
         if (!notificationConfig.isAutoClearOnSuccess()) {
-            this.setSimpleNotificationBuilder(0,0,false, false);
+            this.notification.setProgress(0,0, false);
+            this.notification.setOngoing(false);
             this.setRingtone();
-            this.notificationManager.notify(UPLOAD_NOTIFICATION_ID_DONE+1, notification.build());
+            this.notificationManager.notify(UPLOAD_NOTIFICATION_ID_DONE, notification.build());
         }
     }
 
     private void updateNotificationError() {
         stopForeground(false);
-        this.setSimpleNotificationBuilder(0,0,false, false);
+        this.notification.setProgress(0,0,false);
+        this.notification.setOngoing(false);
         this.setRingtone();
-        notificationManager.notify(UPLOAD_NOTIFICATION_ID_DONE+1, notification.build());
+        notificationManager.notify(UPLOAD_NOTIFICATION_ID_DONE, notification.build());
     }
 
     private void setRingtone() {
@@ -278,6 +282,5 @@ public class UploadService extends IntentService {
             notification.setSound(RingtoneManager.getActualDefaultRingtoneUri(this, RingtoneManager.TYPE_NOTIFICATION));
             notification.setOnlyAlertOnce(true);
         }
-
     }
 }
