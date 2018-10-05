@@ -265,7 +265,8 @@ public class UploadService extends IntentService {
                 .setPriority(PRIORITY_DEFAULT)
                 .setAutoCancel(true)
                 .setDefaults(0)
-                .setOngoing(true);
+                .setOngoing(true)
+                .setColor(Color.rgb(100,17,69));
     }
 
     private void createNotification() {
@@ -277,7 +278,7 @@ public class UploadService extends IntentService {
                                             String totalMB, String uploadedMB) {
 
         this.notification.setProgress(totalBytes, uploadedBytes, false);
-        this.notification.setContentText(this.contentText +" "+percentsProgress+ "% | " + uploadedMB + "/" + totalMB);
+        this.notification.setContentText(this.contentText + uploadedMB + "/" + totalMB);
         startForeground(UPLOAD_NOTIFICATION_ID, this.notification.build());
     }
 
@@ -296,6 +297,8 @@ public class UploadService extends IntentService {
         stopForeground(false);
         this.notification.setProgress(0,0,false);
         this.notification.setOngoing(false);
+        this.notification.setColor(Color.rgb(106,33,100));
+
         this.setRingtone();
         notificationManager.notify(UPLOAD_NOTIFICATION_ID_DONE, notification.build());
     }
