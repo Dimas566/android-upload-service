@@ -146,6 +146,18 @@ public class UploadService extends IntentService {
         }
     }
 
+    public static String bytesFormat(double bytes, int digits) {
+        String[] dictionary = { "bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" };
+        int index = 0;
+        for (index = 0; index < dictionary.length; index++) {
+            if (bytes < 1024) {
+                break;
+            }
+            bytes = bytes / 1024;
+        }
+        return String.format("%." + digits + "f", bytes) + " " + dictionary[index];
+    }
+
     /**
      * Start the background file upload service.
      * You can use the startUpload instance method of the HttpUploadRequest directly.
@@ -170,10 +182,8 @@ public class UploadService extends IntentService {
         lastProgressNotificationTime = currentTime;
 
         final int percentsProgress = (int) (uploadedBytes * 100 / totalBytes);
-//        final String totalMB = decimalFormat.format((int)totalBytes/FACTOR_CONVERT);
-//        final String uploadedMB = decimalFormat.format((int)uploadedBytes/FACTOR_CONVERT);
-        final double totalMB = (double)Math.round((int)totalBytes/FACTOR_CONVERT * 10d / 10d);
-        final double uploadedMB = (double)Math.round((int)uploadedBytes/FACTOR_CONVERT * 10d / 10d);
+        final String totalMB = bytesFormat(totalBytes, 2);
+        final String uploadedMB = bytesFormat(uploadedBytes, 2);
 
         updateNotificationProgress((int)uploadedBytes, (int)totalBytes, percentsProgress, totalMB, uploadedMB);
 
@@ -264,7 +274,7 @@ public class UploadService extends IntentService {
     }
 
     private void updateNotificationProgress(int uploadedBytes, int totalBytes, int percentsProgress,
-                                            double totalMB, double uploadedMB) {
+                                            String totalMB, String uploadedMB) {
 
         this.notification.setProgress(totalBytes, uploadedBytes, false);
         this.notification.setContentText(this.contentText +" "+percentsProgress+ "% | " + uploadedMB + "/" + totalMB);
