@@ -77,6 +77,7 @@ public class UploadService extends IntentService {
     private PowerManager.WakeLock wakeLock;
     private UploadNotificationConfig notificationConfig;
     private long lastProgressNotificationTime;
+    private String contentText;
 
     private static HttpUploadTask currentTask;
 
@@ -164,13 +165,15 @@ public class UploadService extends IntentService {
 
         lastProgressNotificationTime = currentTime;
 
-        updateNotificationProgress((int)uploadedBytes, (int)totalBytes);
+        final int percentsProgress = (int) (uploadedBytes * 100 / totalBytes);
+
+        updateNotificationProgress((int)uploadedBytes, (int)totalBytes, percentsProgress);
 
         final Intent intent = new Intent(getActionBroadcast());
         intent.putExtra(UPLOAD_ID, uploadId);
         intent.putExtra(STATUS, STATUS_IN_PROGRESS);
 
-        final int percentsProgress = (int) (uploadedBytes * 100 / totalBytes);
+
         intent.putExtra(PROGRESS, percentsProgress);
 
         intent.putExtra(PROGRESS_UPLOADED_BYTES, uploadedBytes);
@@ -232,6 +235,7 @@ public class UploadService extends IntentService {
     }
 
     private void setSimpleNotificationBuilder(){
+        this.contentText = notificationConfig.getMessage();
         this.createNotificationChannelUploadService();
         this.notification = new Builder(this, UPLOAD_CHANNEL_ID)
                 .setSmallIcon(notificationConfig.getIconResourceID())
@@ -239,7 +243,7 @@ public class UploadService extends IntentService {
                 .setWhen(System.currentTimeMillis())
                 .setContentIntent(notificationConfig.getPendingIntent(this))
                 .setContentTitle(notificationConfig.getTitle())
-                .setContentText(notificationConfig.getMessage())
+                .setContentText(this.contentText)
                 .setPriority(PRIORITY_DEFAULT)
                 .setAutoCancel(true)
                 .setDefaults(0)
@@ -251,8 +255,9 @@ public class UploadService extends IntentService {
         startForeground(UPLOAD_NOTIFICATION_ID, this.notification.build());
     }
 
-    private void updateNotificationProgress(int uploadedBytes, int totalBytes) {
+    private void updateNotificationProgress(int uploadedBytes, int totalBytes, int percentsProgress) {
         this.notification.setProgress(totalBytes, uploadedBytes, false);
+        this.notification.setContentText(this.contentText +" "+percentsProgress+ "% " + uploadedBytes + "/" + totalBytes);
         startForeground(UPLOAD_NOTIFICATION_ID, this.notification.build());
 
     }
