@@ -278,7 +278,7 @@ public class UploadService extends IntentService {
                                             String totalMB, String uploadedMB) {
 
         this.notification.setProgress(totalBytes, uploadedBytes, false);
-        this.notification.setContentText(this.contentText + uploadedMB + "/" + totalMB);
+        this.notification.setContentText(this.contentText + " "+ uploadedMB + "/" + totalMB);
         startForeground(UPLOAD_NOTIFICATION_ID, this.notification.build());
     }
 
