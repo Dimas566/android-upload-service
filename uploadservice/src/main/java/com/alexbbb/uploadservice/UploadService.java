@@ -170,8 +170,10 @@ public class UploadService extends IntentService {
         lastProgressNotificationTime = currentTime;
 
         final int percentsProgress = (int) (uploadedBytes * 100 / totalBytes);
-        final String totalMB = decimalFormat.format((int)totalBytes/FACTOR_CONVERT);
-        final String uploadedMB = decimalFormat.format((int)uploadedBytes/FACTOR_CONVERT);
+//        final String totalMB = decimalFormat.format((int)totalBytes/FACTOR_CONVERT);
+//        final String uploadedMB = decimalFormat.format((int)uploadedBytes/FACTOR_CONVERT);
+        final double totalMB = (double)Math.round((int)totalBytes/FACTOR_CONVERT * 10d / 10d);
+        final double uploadedMB = (double)Math.round((int)uploadedBytes/FACTOR_CONVERT * 10d / 10d);
 
         updateNotificationProgress((int)uploadedBytes, (int)totalBytes, percentsProgress, totalMB, uploadedMB);
 
@@ -262,12 +264,11 @@ public class UploadService extends IntentService {
     }
 
     private void updateNotificationProgress(int uploadedBytes, int totalBytes, int percentsProgress,
-                                            String totalMB, String uploadedMB) {
+                                            double totalMB, double uploadedMB) {
 
         this.notification.setProgress(totalBytes, uploadedBytes, false);
         this.notification.setContentText(this.contentText +" "+percentsProgress+ "% | " + uploadedMB + "/" + totalMB);
         startForeground(UPLOAD_NOTIFICATION_ID, this.notification.build());
-
     }
 
     private void updateNotificationCompleted() {
