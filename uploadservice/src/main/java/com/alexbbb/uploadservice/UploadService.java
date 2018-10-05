@@ -11,6 +11,7 @@ import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat.Builder;
 import android.media.RingtoneManager;
 import java.net.MalformedURLException;
+import java.text.DecimalFormat;
 
 import static android.support.v4.app.NotificationCompat.PRIORITY_DEFAULT;
 
@@ -55,6 +56,7 @@ public class UploadService extends IntentService {
      * We aim for 6 updates per second.
      */
     protected static final long PROGRESS_REPORT_INTERVAL = 166;
+    protected static final double FACTOR_CONVERT = 0.000001;
 
     private static final String BROADCAST_ACTION_SUFFIX = ".uploadservice.broadcast.status";
     public static final String UPLOAD_ID = "id";
@@ -78,6 +80,7 @@ public class UploadService extends IntentService {
     private UploadNotificationConfig notificationConfig;
     private long lastProgressNotificationTime;
     private String contentText;
+    private DecimalFormat decimalFormat;
 
     private static HttpUploadTask currentTask;
 
@@ -113,6 +116,7 @@ public class UploadService extends IntentService {
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
 
         this.createNotificationChannelUploadService();
+        this.decimalFormat = new DecimalFormat("#.0");
     }
 
     @Override
@@ -166,8 +170,10 @@ public class UploadService extends IntentService {
         lastProgressNotificationTime = currentTime;
 
         final int percentsProgress = (int) (uploadedBytes * 100 / totalBytes);
+        final String totalMB = decimalFormat.format((int)totalBytes/FACTOR_CONVERT);
+        final String uploadedMB = decimalFormat.format((int)uploadedBytes/FACTOR_CONVERT);
 
-        updateNotificationProgress((int)uploadedBytes, (int)totalBytes, percentsProgress);
+        updateNotificationProgress((int)uploadedBytes, (int)totalBytes, percentsProgress, totalMB, uploadedMB);
 
         final Intent intent = new Intent(getActionBroadcast());
         intent.putExtra(UPLOAD_ID, uploadId);
@@ -255,9 +261,11 @@ public class UploadService extends IntentService {
         startForeground(UPLOAD_NOTIFICATION_ID, this.notification.build());
     }
 
-    private void updateNotificationProgress(int uploadedBytes, int totalBytes, int percentsProgress) {
+    private void updateNotificationProgress(int uploadedBytes, int totalBytes, int percentsProgress,
+                                            String totalMB, String uploadedMB) {
+
         this.notification.setProgress(totalBytes, uploadedBytes, false);
-        this.notification.setContentText(this.contentText +" "+percentsProgress+ "% " + uploadedBytes + "/" + totalBytes);
+        this.notification.setContentText(this.contentText +" "+percentsProgress+ "% | " + uploadedMB + "/" + totalMB);
         startForeground(UPLOAD_NOTIFICATION_ID, this.notification.build());
 
     }
