@@ -2,21 +2,21 @@ apply plugin: 'com.android.library'
 apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'com.jfrog.bintray'
 
-def siteUrl = 'https://github.com/jhonatanmartir/android-upload-service'
-def gitUrl = 'https://github.com/jhonatanmartir/android-upload-service.git'
+def siteUrl = 'https://github.com/Dimas566/android-upload-service'
+def gitUrl = 'https://github.com/Dimas566/android-upload-service.git'
 def projectName = "android-upload-service"
 def projectDesc = "Easily upload files in the background with automatic Android Notification Center progress indication."
-def projectGroup = "com.github.jhonatanmartir"
+def projectGroup = "com.github.Dimas566"
 group = projectGroup
 version = "1.0"
 
 android {
-    compileSdkVersion 27
+    compileSdkVersion 33
     buildToolsVersion "28.0.2"
 
     defaultConfig {
-        minSdkVersion 14
-        targetSdkVersion 27
+        minSdkVersion 21
+        targetSdkVersion 33
         versionCode 10
         versionName version
     }
@@ -30,6 +30,7 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+    //noinspection GradleCompatible
     implementation 'com.android.support:appcompat-v7:27.1.1'
 }
 

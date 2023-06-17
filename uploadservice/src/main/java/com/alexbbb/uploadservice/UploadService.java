@@ -1,5 +1,6 @@
 package com.alexbbb.uploadservice;
 
+import android.annotation.SuppressLint;
 import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -8,12 +9,9 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.PowerManager;
-import android.support.v4.app.NotificationCompat.Builder;
 import android.media.RingtoneManager;
 import java.net.MalformedURLException;
 import java.text.DecimalFormat;
-
-import static android.support.v4.app.NotificationCompat.PRIORITY_DEFAULT;
 
 /**
  * Service to upload files in background using HTTP POST with notification center progress
@@ -75,7 +73,7 @@ public class UploadService extends IntentService {
     public static final String UPLOAD_CHANNEL_NAME = "UPLOAD SERVICE CHANNEL";
 
     private NotificationManager notificationManager;
-    private Builder notification;
+    private Notification.Builder notification;
     private PowerManager.WakeLock wakeLock;
     private UploadNotificationConfig notificationConfig;
     private long lastProgressNotificationTime;
@@ -105,6 +103,7 @@ public class UploadService extends IntentService {
         super(SERVICE_NAME);
     }
 
+    @SuppressLint("InvalidWakeLockTag")
     @Override
     public void onCreate() {
         super.onCreate();
@@ -255,18 +254,20 @@ public class UploadService extends IntentService {
     private void setSimpleNotificationBuilder(){
         this.contentText = notificationConfig.getMessage();
         this.createNotificationChannelUploadService();
-        this.notification = new Builder(this, UPLOAD_CHANNEL_ID)
-                .setSmallIcon(notificationConfig.getIconResourceID())
-                .setChannelId(UPLOAD_CHANNEL_ID)
-                .setWhen(System.currentTimeMillis())
-                .setContentIntent(notificationConfig.getPendingIntent(this))
-                .setContentTitle(notificationConfig.getTitle())
-                .setContentText(this.contentText)
-                .setPriority(PRIORITY_DEFAULT)
-                .setAutoCancel(true)
-                .setDefaults(0)
-                .setOngoing(true)
-                .setColor(Color.rgb(100,17,69));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            this.notification = new Notification.Builder(this, UPLOAD_CHANNEL_ID)
+                    .setSmallIcon(notificationConfig.getIconResourceID())
+                    .setChannelId(UPLOAD_CHANNEL_ID)
+                    .setWhen(System.currentTimeMillis())
+                    .setContentIntent(notificationConfig.getPendingIntent(this))
+                    .setContentTitle(notificationConfig.getTitle())
+                    .setContentText(this.contentText)
+                    .setPriority(Notification.PRIORITY_DEFAULT)
+                    .setAutoCancel(true)
+                    .setDefaults(0)
+                    .setOngoing(true)
+                    .setColor(Color.rgb(100,17,69));
+        }
     }
 
     private void createNotification() {

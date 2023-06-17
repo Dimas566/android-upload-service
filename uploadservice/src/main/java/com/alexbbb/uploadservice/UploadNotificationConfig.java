@@ -3,6 +3,7 @@ package com.alexbbb.uploadservice;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -21,6 +22,8 @@ class UploadNotificationConfig implements Parcelable {
     private final boolean autoClearOnSuccess;
     private boolean ringTone;
     private Intent clickIntent;
+
+    private PendingIntent pendingIntent;
 
     public UploadNotificationConfig() {
         iconResourceID = android.R.drawable.ic_menu_upload;
@@ -80,10 +83,14 @@ class UploadNotificationConfig implements Parcelable {
 
     public final PendingIntent getPendingIntent(Context context) {
         if (clickIntent == null) {
-            return PendingIntent.getBroadcast(context, 0, new Intent(), PendingIntent.FLAG_UPDATE_CURRENT);
-        }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                pendingIntent = PendingIntent.getBroadcast(context, 0, new Intent(), PendingIntent.FLAG_IMMUTABLE);
+            } else {
+               pendingIntent = PendingIntent.getActivity(context, 1, clickIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            }
 
-        return PendingIntent.getActivity(context, 1, clickIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        }
+        return pendingIntent;
     }
 
     public final void setClickIntent(Intent clickIntent) {
